@@ -62,10 +62,11 @@ public class FlightController {
 				relatedFlight.addAll(re.getFlights());
 			}
 		}
-		if(overlapping(newFlight,flight,relatedFlight)){
+		if(!overlapping(newFlight,flight,relatedFlight)){
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			throw new BadRequestException( "Overlapping occur in reservation after update, refuse to update", 400);
 		}
+		flight.setPlane(plane);
 		if(flight.getPlane().getCapacity() != capacity){
 			int leftS = flight.getSeatsLeft();
 			leftS += (flight.getPlane().getCapacity() - capacity);
@@ -84,7 +85,7 @@ public class FlightController {
 		flight.setDepartureTime(dateD);
 		flight.setArrivalTime(dateA);
 		flight.setDescription(description);
-		flight.setPlane(plane);
+		
 
 		Flight f = flightRepository.save(flight);
 		
