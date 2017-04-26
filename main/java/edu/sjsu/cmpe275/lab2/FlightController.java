@@ -1,6 +1,10 @@
 package edu.sjsu.cmpe275.lab2;
 
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.PriorityQueue;
+import java.util.Set;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
@@ -22,8 +26,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RestController
 @RequestMapping("/flight")
 public class FlightController {
-	//@Autowired
-	//private ReservationRepository reservationRepository;
+	@Autowired
+	private ReservationRepository reservationRepository;
 	//@Autowired
 	//private PassengerRepository passengerRepository;
 	@Autowired
@@ -48,8 +52,20 @@ public class FlightController {
 		Date dateD = sdf.parse(departureTime);
 		Date dateA = sdf.parse(arrivalTime);
 		
+		Flight newFlight = new Flight();
+		newFlight.setDepartureTime(dateD);
+		newFlight.setArrivalTime(dateA);
 		//TODO overlapping check error code 400
-		
+		Set<Flight> relatedFlight = new HashSet<Flight>();
+		for(Reservation re: reservationRepository.findAll()){
+			if(re.getFlights().contains(flight)){
+				relatedFlight.addAll(re.getFlights());
+			}
+		}
+		if(overlapping(newFlight,flight,relatedFlight)){
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			throw new BadRequestException( "Overlapping occur in reservation after update, refuse to update", 400);
+		}
 		if(flight.getPlane().getCapacity() != capacity){
 			int leftS = flight.getSeatsLeft();
 			leftS += (flight.getPlane().getCapacity() - capacity);
@@ -57,6 +73,8 @@ public class FlightController {
 				flight.setSeatsLeft(leftS);
 			} else {
 				//TODO exception: left seat is lower than zero
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				throw new BadRequestException( "Left seat is lower than zero", 400);
 			}
 		}
 
@@ -79,7 +97,34 @@ public class FlightController {
 
 		return f;
 	}
-	
+	//non-overlapping judgement
+		private boolean overlapping(Flight newFlight, Flight oldFlights, Set<Flight> relatedFlights){
+		//addedFlights is the list you want to add into a exited reservation or a new reservation
+			PriorityQueue<Flight> queue = new PriorityQueue<>(new Comparator<Flight>(){
+		        public int compare(Flight a, Flight b){
+		            return a.getDepartureTime().compareTo(b.getDepartureTime());
+		        }
+		    });
+			//addedFlights must be not null
+			
+			queue.add(newFlight);
+			
+			//reservatedFlights may be null
+			if(relatedFlights!=null){
+				relatedFlights.remove(oldFlights);
+			}
+			Flight previousFlight = null;
+			for(Flight flight: queue){
+				if(previousFlight!=null){
+					if(!previousFlight.getArrivalTime().before(flight.getDepartureTime())){
+				 		//System.out.println("times are overlap");
+				 		return false;
+					}
+				}
+				previousFlight = flight;
+			}
+			return true;
+		}
 	@RequestMapping(value = "/{flightNumber}",
 			params = "json",
 			method = RequestMethod.GET,
@@ -173,6 +218,8 @@ public class FlightController {
 			} else {
 				//TODO You can not delete a flight that has one or more reservation, 
 				//in which case, the deletion should fail with error code 400. 
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				throw new BadRequestException("This flight  has one or more reservations", 400);//DONE
 			}
 		}catch(Exception e){
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);

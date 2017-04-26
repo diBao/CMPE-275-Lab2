@@ -110,12 +110,13 @@ public class ReservationController {
 			method = RequestMethod.GET,
 			produces = "application/xml")
 	public @ResponseBody Object searchReservation(  
-			@RequestParam("passengerId") int passengerId,
+			@RequestParam("passengerId") Integer passengerId,
             @RequestParam("from") String from,
             @RequestParam("to") String to,
-            @RequestParam("flightNumber") String flightNumber){
+            @RequestParam("flightNumber") String flightNumber,
+            HttpServletResponse response){
 		
-		return searchReservation(flightNumber, from, to, passengerId); // TODO unfinished
+		return searchReservation(flightNumber, from, to, passengerId, response); // TODO unfinished
 		//return reservationRepository.findOne(reservation.getOrderNumber());
 	}
 
@@ -338,8 +339,8 @@ public class ReservationController {
 		return true;
 	}
 	
-	@SuppressWarnings("unused")
-	private Object searchReservation(String flightNumber, String from, String to, Integer passengerId){
+	//@SuppressWarnings("unused")
+	private Object searchReservation(String flightNumber, String from, String to, Integer passengerId, HttpServletResponse response){
 		Flight flight = null;
 		Passenger passenger = null;
 		Set<Reservation> reservations = new HashSet<Reservation>();
@@ -347,25 +348,31 @@ public class ReservationController {
 		if(passengerId != null){
 			passenger = passengerRepository.findOne(passengerId);
 			if(passenger == null) {
-				return "bad request"; //TODO
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				throw new BadRequestException(passengerId, "Passenger with Id "); //TODO
 			}
-			passenger.removeCircle();
+			//passenger.removeCircle();
 			reservations = passenger.getReservations();
-			if(reservations == null)
+			if(reservations == null)//TODO this is response?
 				return "result is empty ";
     	}
 		if(flightNumber != null){
 			flight = flightRepository.findOne(flightNumber);
     		if(flight == null) {
-    			return "bad request"; //TODO
+    			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				throw new BadRequestException(flightNumber, "Airline with flightNumber "); //TODO
     		}
-    		flight.removeCircle();
+    		System.out.println("there is a flight" +flight.getNumber());
+    		//flight.removeCircle();
     		if(reservations != null){
+    			System.out.println("there is a Reservation " +reservations.size());
     			for(Reservation re : reservations){
+    				
     				if(!re.getFlights().contains(flight))
     					reservations.remove(re);
+    				re.removeCircle();
     			}
-    			if(reservations == null){
+    			if(reservations == null){////TODO this is response?
     				return "result is empty ";
     			}
     		} else {
@@ -378,16 +385,30 @@ public class ReservationController {
     		}
     	}
 		
-    	if(from != null){
-    		if(reservations == null){
-    			return "2";// TODO get reservation;
-    		}
-    	}
-    	if(to != null){
-    		if(reservations == null){
-    			return "3";// TODO get reservation;
-    		}
-    	}
+		if(reservations == null){
+			return "result is empty ";// TODO get reservation;
+		}else{
+			for(Reservation re: reservations){
+				Set<Flight> flights = re.getFlights();
+				// TODO get reservation;
+				if(from != null){
+					for(Flight f : flights){
+						if(!f.getFrom().equals(from)){
+							flights.remove(f);
+						}
+					}
+		    	}
+				// TODO get reservation;
+		    	if(to != null){
+		    		for(Flight f : flights){
+						if(!f.getTo().equals(to)){
+							flights.remove(f);
+						}
+					}
+		    	}
+			}
+		}
+    	
         return reservations;
 	}
 }
