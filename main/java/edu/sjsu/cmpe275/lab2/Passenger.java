@@ -1,11 +1,14 @@
 package edu.sjsu.cmpe275.lab2;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonRootName;
 
 //import javax.xml.bind.annotation.XmlTransient;
 import javax.persistence.CascadeType;
@@ -19,8 +22,10 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name="Passenger")
-@XmlRootElement
+@XmlRootElement(name = "Passenger")
+@JsonRootName(value = "Passenger")
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Passenger {
 	
 	@Id
@@ -47,6 +52,9 @@ public class Passenger {
 	//private Set<Reservation> reservations = new HashSet<Reservation>();
 	//@OneToMany(targetEntity = Reservation.class, mappedBy = "passenger")
 	//private Set<Reservation> reservations = new HashSet<Reservation>();
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "passenger")
+	private Set<Reservation> reservations = new HashSet<Reservation>();
 	
 	public Passenger(){
 	}
@@ -93,15 +101,29 @@ public class Passenger {
 	public void setGender(String gender) {
 		this.gender = gender;
 	}
-	
-	/*
+
 	public Set<Reservation> getReservations() {
 		return reservations;
 	}
 	public void setReservations(Set<Reservation> reservations) {
 		this.reservations = reservations;
 	}
-	*/
 	
+	public void removeCircle() {
+        
+        Iterator<Reservation> reIt = this.getReservations().iterator();
+        Iterator<Flight> flIt = null;
+        Reservation reservation = null;
+        
+        while(reIt.hasNext()){ 
+            reservation = reIt.next(); 
+            reservation.setPassenger(null);
+            flIt = reservation.getFlights().iterator();
+            while(flIt.hasNext()){ 
+            	flIt.next().setPassengers(null); 
+            }
+
+        }
+    }
 	
 }
