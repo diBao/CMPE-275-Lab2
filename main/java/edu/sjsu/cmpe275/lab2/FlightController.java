@@ -114,6 +114,7 @@ public class FlightController {
 			if(relatedFlights!=null){
 				relatedFlights.remove(oldFlights);
 			}
+			queue.addAll(relatedFlights);
 			Flight previousFlight = null;
 			for(Flight flight: queue){
 				if(previousFlight!=null){
