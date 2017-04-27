@@ -27,6 +27,7 @@ public class ReservationController {
 	private PassengerRepository passengerRepository;
 	@Autowired
 	private FlightRepository flightRepository;
+	
 
 	@RequestMapping(
 			value = "/{number}", params = "json",
@@ -85,14 +86,13 @@ public class ReservationController {
 	
 	//TODO may only exist one added or removed parameter
 	@RequestMapping(
-			value = "/{number}",
-			params= {"flightsAdded", "flightsRemoved"},
+			value = "/{number}", 
 			method = RequestMethod.POST,
 			produces = "application/json")
 	public @ResponseBody Object updateReservation(
 			@PathVariable String number,
-			@RequestParam("flightsAdded") String[] flightsAdded,
-            @RequestParam("flightsRemoved") String[] flightsRemoved,
+			@RequestParam(value = "flightsAdded", required = false) String[] flightsAdded,
+            @RequestParam(value = "flightsRemoved", required = false) String[] flightsRemoved,
             HttpServletResponse response){
 		if(reservationRepository.exists(number)){
 			return storeReservation2(reservationRepository.findOne(number), flightsAdded, flightsRemoved, response);
@@ -106,17 +106,18 @@ public class ReservationController {
 	
 	@RequestMapping(
 			value = "",
-			params= {"passengerId", "from", "to", "flightNumber"},
 			method = RequestMethod.GET,
 			produces = "application/xml")
 	public @ResponseBody Object searchReservation(  
-			@RequestParam("passengerId") Integer passengerId,
-            @RequestParam("from") String from,
-            @RequestParam("to") String to,
-            @RequestParam("flightNumber") String flightNumber,
+			@RequestParam(value = "passengerId", required = false) Integer passengerId,
+            @RequestParam(value = "from", required = false) String from,
+            @RequestParam(value = "to", required = false) String to,
+            @RequestParam(value = "flightNumber", required = false) String flightNumber,
             HttpServletResponse response){
-		
-		return searchReservation(flightNumber, from, to, passengerId, response); // TODO unfinished
+		if(passengerId != null || from != null || to != null || flightNumber != null){
+			return findReservation(flightNumber, from, to, passengerId, response); // TODO unfinished
+		}
+		 return "bad request"; //TODO 
 		//return reservationRepository.findOne(reservation.getOrderNumber());
 	}
 
@@ -134,13 +135,15 @@ public class ReservationController {
 			Reservation reservation = reservationRepository.findOne(number);
 			Set<Reservation> res = reservation.getPassenger().getReservations();
 			res.remove(reservation);
-			reservation.setPassenger(null);
+			
 			Set<Flight> flights = reservation.getFlights();
 			for(Flight f : flights) {
-				f.getPassengers().remove(reservation.getPassenger());
+				Set<Passenger> pas = f.getPassengers();
+				pas.remove(reservation.getPassenger());
+				f.setPassengers(pas);
 				f.setSeatsLeft(f.getSeatsLeft()+1);
 			}
-			
+			reservation.setPassenger(null);
 			reservationRepository.delete(number);
 			response.setStatus(HttpServletResponse.SC_ACCEPTED);
 			return new Response(200, "Delete reservation success"); 
@@ -277,13 +280,13 @@ public class ReservationController {
 
 			if(passengers.contains(passenger)){
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				throw new BadRequestException("passenger already in",400); // TODO bad request
+				throw new BadRequestException("passenger already in",400); // DONE bad request
 			} else {
 				int seat = flight.getSeatsLeft();
 				System.out.println("seat" + seat);
 				if(seat == 0) {
 					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-					throw new BadRequestException("Flight is full",400);//TODO bad request
+					throw new BadRequestException("Flight is full",400);//DONE bad request
 				} else {
 					seat--;
 				}
@@ -339,76 +342,122 @@ public class ReservationController {
 		return true;
 	}
 	
-	//@SuppressWarnings("unused")
-	private Object searchReservation(String flightNumber, String from, String to, Integer passengerId, HttpServletResponse response){
+	@SuppressWarnings("unused")
+	private Object findReservation(String flightNumber, String from, String to, Integer passengerId, HttpServletResponse response){
 		Flight flight = null;
 		Passenger passenger = null;
-		Set<Reservation> reservations = new HashSet<Reservation>();
+		Reservations reservations = new Reservations();
+		Set<Reservation >res_temp = new HashSet<Reservation>();
 		
+		System.out.println(flightNumber);
+		System.out.println(from);
+		System.out.println(to);
+		System.out.println(passengerId);
 		if(passengerId != null){
 			passenger = passengerRepository.findOne(passengerId);
 			if(passenger == null) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				throw new BadRequestException(passengerId, "Passenger with Id "); //TODO
+				throw new BadRequestException(passengerId, "Passenger with Id "); //DONE
 			}
 			//passenger.removeCircle();
-			reservations = passenger.getReservations();
-			if(reservations == null)//TODO this is response?
+			//reservations = passenger.getReservations();
+			reservations.setReservations(passenger.getReservations());
+			if(reservations.getReservations() == null)//TODO this is response? yes， it is.
 				return "result is empty ";
     	}
 		if(flightNumber != null){
 			flight = flightRepository.findOne(flightNumber);
     		if(flight == null) {
     			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				throw new BadRequestException(flightNumber, "Airline with flightNumber "); //TODO
+				throw new BadRequestException(flightNumber, "Airline with flightNumber "); //DONE
     		}
-    		System.out.println("there is a flight" +flight.getNumber());
-    		//flight.removeCircle();
     		if(reservations != null){
-    			System.out.println("there is a Reservation " +reservations.size());
-    			for(Reservation re : reservations){
-    				
-    				if(!re.getFlights().contains(flight))
-    					reservations.remove(re);
-    				re.removeCircle();
+    			for(Reservation re : reservations.getReservations()){
+    				if(!re.getFlights().contains(flight)){
+    					Set<Reservation>res = reservations.getReservations();
+    					res.remove(re);
+    					reservations.setReservations(res);
+    				}
     			}
-    			if(reservations == null){////TODO this is response?
+    			if(reservations == null){////TODO this is response?   yes it is
     				return "result is empty ";
     			}
     		} else {
     			for(Reservation re : reservationRepository.findAll()){
     				for(Flight f : re.getFlights()){
-    					 if(f.equals(flight))
-    						 reservations.add(re); //TODO get reservation
+    					if(f.equals(flight)){
+    						Set<Reservation>res = reservations.getReservations();
+    						res.add(re);
+    						reservations.setReservations(res);
+    					}
     				}
+    			}
+    			if(reservations == null){////TODO this is response?   yes it is
+    				return "result is empty ";
     			}
     		}
     	}
 		
-		if(reservations == null){
-			return "result is empty ";// TODO get reservation;
-		}else{
-			for(Reservation re: reservations){
-				Set<Flight> flights = re.getFlights();
-				// TODO get reservation;
-				if(from != null){
-					for(Flight f : flights){
-						if(!f.getFrom().equals(from)){
-							flights.remove(f);
+		if(from != null){
+			if(reservations != null){
+				for(Reservation re : reservations.getReservations()){
+					for(Flight f : re.getFlights()){
+						if(f.getFrom().equals(from)){
+							res_temp.add(re);
 						}
 					}
-		    	}
-				// TODO get reservation;
-		    	if(to != null){
-		    		for(Flight f : flights){
-						if(!f.getTo().equals(to)){
-							flights.remove(f);
+				}
+				if(res_temp == null){
+					return "result is empty ";
+				}
+			} else {
+				for(Reservation re : reservationRepository.findAll()){
+    				for(Flight f : re.getFlights()){
+    					if(f.getFrom().equals(from)){
+							res_temp.add(re);
 						}
-					}
-		    	}
+    				}
+    			}
+				if(res_temp == null){
+					return "result is empty ";
+				}
 			}
+    	}
+		System.out.println("1 " + res_temp.size());
+		
+		reservations.setReservations(res_temp);
+		res_temp = new HashSet<Reservation>();
+		// TODO get reservation;
+		if(to != null){
+			if(reservations != null){
+				for(Reservation re : reservations.getReservations()){
+					for(Flight f : re.getFlights()){
+						if(f.getTo().equals(to)){
+							res_temp.add(re);
+						}
+					}
+				}
+			} else {
+				for(Reservation re : reservationRepository.findAll()){
+    				for(Flight f : re.getFlights()){
+    					if(f.getTo().equals(to)){
+							res_temp.add(re);
+						}
+    				}
+    			}
+			}
+    	}
+		System.out.println("2 " + res_temp);
+		if(res_temp == null)
+			res_temp = reservations.getReservations();
+		
+		reservations = new Reservations();
+		for(Reservation re : res_temp){
+			re.removeCircle();
+			Set<Reservation>res = reservations.getReservations();
+			res.add(re);
+			reservations.setReservations(res);
 		}
-    	
         return reservations;
 	}
 }

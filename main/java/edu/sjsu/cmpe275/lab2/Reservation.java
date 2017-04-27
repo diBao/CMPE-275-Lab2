@@ -21,10 +21,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.hibernate.annotations.GenericGenerator;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonRootName;
 
 @Entity
 @Table(name = "Reservation")
-@XmlRootElement
+@XmlRootElement(name = "Reservation")
+@JsonRootName(value = "Reservation")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Reservation {
 	@Id
