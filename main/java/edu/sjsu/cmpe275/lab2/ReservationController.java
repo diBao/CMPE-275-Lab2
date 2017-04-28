@@ -365,10 +365,14 @@ public class ReservationController {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				throw new BadRequestException(passengerId, "Passenger with Id "); //DONE
 			}
-			reservations.setReservations(passenger.getReservations());
-			if(reservations.getReservations() == null)//DONE this is response? yes， it is.
+			res_temp = passenger.getReservations();
+			if(res_temp == null)//DONE this is response? yes， it is.
 				return "No result!";
+			reservations.setReservations(res_temp);
+			res_temp = new HashSet<Reservation>();
     	}
+		//System.out.println(res_temp.size());
+		
 		
 		if(flightNumber != null){
 			flight = flightRepository.findOne(flightNumber);
@@ -382,6 +386,8 @@ public class ReservationController {
     					res_temp.add(re);
     				}
     			}
+    			if(res_temp.isEmpty())
+    				return "No result!";
     		} else {
     			//Set<Reservation> res = null;
     			for(Reservation re : reservationRepository.findAll()){
@@ -391,11 +397,14 @@ public class ReservationController {
     					}
     				}
     			}
+    			if(res_temp.isEmpty())
+    				return "No result!";
     		}
+    		reservations.setReservations(res_temp);
+    		res_temp = new HashSet<Reservation>();
     	}
+		//System.out.println(res_temp.size());
 		
-		reservations.setReservations(res_temp);
-		res_temp = new HashSet<Reservation>();
 		
 		if(from != null){
 			if(!reservations.getReservations().isEmpty()){
@@ -406,6 +415,8 @@ public class ReservationController {
 						}
 					}
 				}
+				if(res_temp.isEmpty())
+    				return "No result!";
 			} else {
 				for(Reservation re : reservationRepository.findAll()){
     				for(Flight f : re.getFlights()){
@@ -414,12 +425,15 @@ public class ReservationController {
 						}
     				}
     			}
+				if(res_temp.isEmpty())
+    				return "No result!";
 			}
+			
+			reservations.setReservations(res_temp);
+			res_temp = new HashSet<Reservation>();
     	}
-		//System.out.println("1 " + res_temp.size());
+		//System.out.println(res_temp.size());
 		
-		reservations.setReservations(res_temp);
-		res_temp = new HashSet<Reservation>();
 		if(to != null){
 			if(!reservations.getReservations().isEmpty()){
 				for(Reservation re : reservations.getReservations()){
@@ -429,6 +443,8 @@ public class ReservationController {
 						}
 					}
 				}
+				if(res_temp.isEmpty())
+    				return "No result!";
 			} else {
 				for(Reservation re : reservationRepository.findAll()){
     				for(Flight f : re.getFlights()){
@@ -437,19 +453,21 @@ public class ReservationController {
 						}
     				}
     			}
+				if(res_temp.isEmpty())
+    				return "No result!";
 			}
     	}
-		//System.out.println("2 " + res_temp);
+		//System.out.println(res_temp.size());
 		if(res_temp.isEmpty())
 			res_temp = reservations.getReservations();
 		
 		reservations = new Reservations();
+		Set<Reservation> res = new HashSet<Reservation>();
 		for(Reservation re : res_temp){
 			re.removeCircle();
-			Set<Reservation> res = reservations.getReservations();
 			res.add(re);
-			reservations.setReservations(res);
 		}
+		reservations.setReservations(res);
 		
 		if(reservations.getReservations().isEmpty())
 			return "No result!";
