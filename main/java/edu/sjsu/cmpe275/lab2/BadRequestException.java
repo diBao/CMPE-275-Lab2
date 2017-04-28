@@ -1,13 +1,16 @@
 package edu.sjsu.cmpe275.lab2;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.annotation.XmlRootElement;
+//import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value=HttpStatus.NOT_FOUND)
 public class BadRequestException extends RuntimeException {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Object ID;//if -1 means no id involved 
 	private String errorMsg;
 	private int statusCode;

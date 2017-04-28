@@ -18,7 +18,7 @@ import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonFormat;
+//import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
@@ -50,11 +50,11 @@ public class Flight {
 	//TODO change type to String
 	//@JsonFormat(pattern="yyyy-MM-dd-HH")
 	@Column(name = "DEPARTURE_TIME", nullable = false)
-	private Date departureTime;
+	private String departureTime;
 
 	//@JsonFormat(pattern="yyyy-MM-dd-HH")
 	@Column(name = "ARRIVAL_TIME", nullable = false)
-	private Date arrivalTime;
+	private String arrivalTime;
 
 	@Column(name = "SEATS_LEFT")
 	private int seatsLeft;
@@ -102,16 +102,16 @@ public class Flight {
 	public void setTo(String to) {
 		this.to = to;
 	}
-	public Date getDepartureTime() {
+	public String getDepartureTime() {
 		return departureTime;
 	}
-	public void setDepartureTime(Date departureTime) {
+	public void setDepartureTime(String departureTime) {
 		this.departureTime = departureTime;
 	}
-	public Date getArrivalTime() {
+	public String getArrivalTime() {
 		return arrivalTime;
 	}
-	public void setArrivalTime(Date arrivalTime) {
+	public void setArrivalTime(String arrivalTime) {
 		this.arrivalTime = arrivalTime;
 	}
 	public int getSeatsLeft() {

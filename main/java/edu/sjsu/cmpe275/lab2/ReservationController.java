@@ -1,5 +1,7 @@
 package edu.sjsu.cmpe275.lab2;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.PriorityQueue;
@@ -28,6 +30,7 @@ public class ReservationController {
 	@Autowired
 	private FlightRepository flightRepository;
 	
+	String format = "yyyy-MM-dd-HH";
 
 	@RequestMapping(
 			value = "/{number}", params = "json",
@@ -72,7 +75,7 @@ public class ReservationController {
 	public @ResponseBody Object createReservation(
 			@RequestParam("passengerId") int passengerId,
             @RequestParam("flightLists") String[] flightLists,
-            HttpServletResponse response){
+            HttpServletResponse response) throws ParseException{
 
 		Passenger passenger = passengerRepository.findOne(passengerId);
 		if(passenger==null){
@@ -84,7 +87,7 @@ public class ReservationController {
 		//return reservationRepository.findOne(reservation.getOrderNumber());
 	}
 	
-	//TODO may only exist one added or removed parameter
+	//DONE may only exist one added or removed parameter
 	@RequestMapping(
 			value = "/{number}", 
 			method = RequestMethod.POST,
@@ -93,7 +96,7 @@ public class ReservationController {
 			@PathVariable String number,
 			@RequestParam(value = "flightsAdded", required = false) String[] flightsAdded,
             @RequestParam(value = "flightsRemoved", required = false) String[] flightsRemoved,
-            HttpServletResponse response){
+            HttpServletResponse response) throws ParseException{
 		if(reservationRepository.exists(number)){
 			return storeReservation2(reservationRepository.findOne(number), flightsAdded, flightsRemoved, response);
 		} else {
@@ -157,7 +160,7 @@ public class ReservationController {
 
 	//for createReservation
 	private Object storeReservation(Reservation reservation, Passenger passenger,
-			String[] flightLists, HttpServletResponse response){
+			String[] flightLists, HttpServletResponse response) throws ParseException{
 		if(flightLists.length==0){
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			throw new BadRequestException("Passenger reserve no flights",400);
@@ -181,7 +184,7 @@ public class ReservationController {
 			throw new BadRequestException("Flights are overlapping",400);
 		}
 		
-		//TODO check if the data is duplicated
+		//DONE check if the data is duplicated
 		for(String flightNum : flightLists){
 			Flight flight = flightRepository.findOne(flightNum);
 			Set<Passenger> passengers = flight.getPassengers();
@@ -219,7 +222,7 @@ public class ReservationController {
 	
 	//for updateReservstion
 	private Object storeReservation2(Reservation reservation, String[] flightsAdded,
-			String[] flightsRemoved, HttpServletResponse response){
+			String[] flightsRemoved, HttpServletResponse response) throws ParseException{
 		if(flightsAdded.length==0&&flightsRemoved.length==0){
 			return reservation;
 		}
@@ -309,8 +312,9 @@ public class ReservationController {
 	}
 	
 	//non-overlapping judgement
-	private boolean overlapping(Set<Flight> addedFlights, Set<Flight> removedFlights, Set<Flight> reservatedFlights){
+	private boolean overlapping(Set<Flight> addedFlights, Set<Flight> removedFlights, Set<Flight> reservatedFlights) throws ParseException{
 	//addedFlights is the list you want to add into a exited reservation or a new reservation
+		SimpleDateFormat sdf = new SimpleDateFormat(format);
 		PriorityQueue<Flight> queue = new PriorityQueue<>(new Comparator<Flight>(){
 	        public int compare(Flight a, Flight b){
 	            return a.getDepartureTime().compareTo(b.getDepartureTime());
@@ -332,7 +336,7 @@ public class ReservationController {
 		Flight previousFlight = null;
 		for(Flight flight: queue){
 			if(previousFlight!=null){
-				if(!previousFlight.getArrivalTime().before(flight.getDepartureTime())){
+				if(!(sdf.parse(previousFlight.getArrivalTime())).before(sdf.parse(flight.getDepartureTime()))){
 			 		//System.out.println("times are overlap");
 			 		return false;
 				}
@@ -362,8 +366,8 @@ public class ReservationController {
 			//passenger.removeCircle();
 			//reservations = passenger.getReservations();
 			reservations.setReservations(passenger.getReservations());
-			if(reservations.getReservations() == null)//TODO this is response? yes， it is.
-				return "result is empty ";
+			if(reservations.getReservations() == null)//DONE this is response? yes， it is.
+				return "No result!";
     	}
 		if(flightNumber != null){
 			flight = flightRepository.findOne(flightNumber);
@@ -380,7 +384,7 @@ public class ReservationController {
     				}
     			}
     			if(reservations == null){////TODO this is response?   yes it is
-    				return "result is empty ";
+    				return "No result!";
     			}
     		} else {
     			for(Reservation re : reservationRepository.findAll()){
@@ -393,7 +397,7 @@ public class ReservationController {
     				}
     			}
     			if(reservations == null){////TODO this is response?   yes it is
-    				return "result is empty ";
+    				return "No result!";
     			}
     		}
     	}
@@ -408,7 +412,7 @@ public class ReservationController {
 					}
 				}
 				if(res_temp == null){
-					return "result is empty ";
+					return "No result!";
 				}
 			} else {
 				for(Reservation re : reservationRepository.findAll()){
@@ -419,7 +423,7 @@ public class ReservationController {
     				}
     			}
 				if(res_temp == null){
-					return "result is empty ";
+					return "No result!";
 				}
 			}
     	}
@@ -445,6 +449,9 @@ public class ReservationController {
 						}
     				}
     			}
+				if(res_temp == null){
+					return "No result!";
+				}
 			}
     	}
 		System.out.println("2 " + res_temp);

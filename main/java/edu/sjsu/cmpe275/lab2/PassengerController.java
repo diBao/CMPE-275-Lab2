@@ -15,9 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import edu.sjsu.cmpe275.lab2.Passenger;
-import edu.sjsu.cmpe275.lab2.PassengerRepository;
-
 
 @RestController
 @RequestMapping(value = "/passenger")
