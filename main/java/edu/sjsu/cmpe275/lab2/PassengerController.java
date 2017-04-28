@@ -53,26 +53,24 @@ public class PassengerController {
 	
 	@RequestMapping(
 			value = "/{id}", 
-			params="json", 
 			method = RequestMethod.GET,
 			produces = "application/json")
 	public @ResponseBody Object getPassengerJson(
 			@PathVariable int id, 
-			@RequestParam Boolean json,
 			HttpServletResponse response) throws BadRequestException {
-		if(json.equals(true)){
-			Passenger passenger = passengerRepository.findOne(id);
-			
-			if(passenger!=null){
-				passenger.removeCircle();
-				return passenger; 
-			}else{
-				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				throw new BadRequestException(id, "Sorry, the requested passenger with id");//DONE
-			}
+		
+		Passenger passenger = passengerRepository.findOne(id);
+		
+		if(passenger!=null){
+			passenger.removeCircle();
+			return passenger; 
+		}else{
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			throw new BadRequestException(id, "Sorry, the requested passenger with id");//DONE
 		}
-		response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-		throw new BadRequestException("Parameter JSON error", 400);//DONE
+		
+		//response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+		//throw new BadRequestException("Parameter JSON error", 400);//DONE
 	}
 	
 	@RequestMapping(

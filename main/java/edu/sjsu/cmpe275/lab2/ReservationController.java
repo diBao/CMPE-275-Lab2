@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.PriorityQueue;
 //import java.util.List;
 import java.util.Set;
@@ -33,13 +34,13 @@ public class ReservationController {
 	String format = "yyyy-MM-dd-HH";
 
 	@RequestMapping(
-			value = "/{number}", params = "json",
+			value = "/{number}",
 			method = RequestMethod.GET,
 			produces = "application/json")
 	public @ResponseBody Object getReservationJson(
 			@PathVariable String number, HttpServletResponse response)
 					throws BadRequestException {
-		if(reservationRepository.exists(number)){
+		if(reservationRepository.exists(number)) {
 			Reservation reservation = reservationRepository.findOne(number);
 			reservation.removeCircle();
 			return reservation;
@@ -118,9 +119,9 @@ public class ReservationController {
             @RequestParam(value = "flightNumber", required = false) String flightNumber,
             HttpServletResponse response){
 		if(passengerId != null || from != null || to != null || flightNumber != null){
-			return findReservation(flightNumber, from, to, passengerId, response); // TODO unfinished
+			return findReservation(flightNumber, from, to, passengerId, response); 
 		}
-		 return "bad request"; //TODO 
+		return "bad request"; //TODO "Please specify at least one parameter"
 		//return reservationRepository.findOne(reservation.getOrderNumber());
 	}
 
@@ -174,7 +175,7 @@ public class ReservationController {
 				f1.add(flightRepository.findOne(f));
 			}
 		}
-		if(f1.size()!=flightLists.length){
+		if(f1 == null || f1.size()!=flightLists.length){
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			throw new BadRequestException("Some flight in your reservation is not existing",404);
 		}
@@ -223,7 +224,7 @@ public class ReservationController {
 	//for updateReservstion
 	private Object storeReservation2(Reservation reservation, String[] flightsAdded,
 			String[] flightsRemoved, HttpServletResponse response) throws ParseException{
-		if(flightsAdded.length==0&&flightsRemoved.length==0){
+		if(flightsAdded == null&&flightsRemoved == null){
 			return reservation;
 		}
 		Set<Flight> fAdd = new HashSet<Flight>();  
@@ -231,7 +232,7 @@ public class ReservationController {
 		Set<Flight> flights = reservation.getFlights();
 		Passenger passenger = reservation.getPassenger();
 		int price = reservation.getPrice();
-		if(flightsAdded.length!=0){
+		if(flightsAdded != null){
 			for(String f : flightsAdded){
 				if(flightRepository.exists(f)){
 					fAdd.add(flightRepository.findOne(f));
@@ -242,7 +243,7 @@ public class ReservationController {
 				throw new BadRequestException("some new flights you want to add are not existing",404);
 			}
 		}
-		if(flightsRemoved.length!=0){
+		if(flightsRemoved != null){
 			for(String f : flightsRemoved){
 				if(flightRepository.exists(f)){
 					fRem.add(flightRepository.findOne(f));
@@ -251,55 +252,59 @@ public class ReservationController {
 		}
 
 		//DONE overlapping check
-		if(!overlapping(fAdd, fRem, flights)){
+		if(fAdd != null && !overlapping(fAdd, fRem, flights)){
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			throw new BadRequestException("Existing overlapped flights",404);
 		}
 
 		//DONE judge if the flight,reservation data is duplicated
-		for(String flightNum : flightsRemoved){
-			Flight flight = flightRepository.findOne(flightNum);
-			Set<Passenger> passengers = flight.getPassengers();
-
-			if(!passengers.contains(passenger)){
-				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				throw new BadRequestException("passenger not in",400); // DONE bad request
-			} else {
-				int seat = flight.getSeatsLeft();
-				System.out.println("seat" + seat);
-				seat++;
-				flight.setSeatsLeft(seat);
-				passengers.remove(passenger);
-			}
-			flight.setPassengers(passengers);
-
-			price -= flight.getPrice();
-			flights.remove(flight);
-		}
-
-		for(String flightNum : flightsAdded){
-			Flight flight = flightRepository.findOne(flightNum);
-			Set<Passenger> passengers = flight.getPassengers();
-
-			if(passengers.contains(passenger)){
-				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-				throw new BadRequestException("passenger already in",400); // DONE bad request
-			} else {
-				int seat = flight.getSeatsLeft();
-				System.out.println("seat" + seat);
-				if(seat == 0) {
+		if(flightsRemoved != null){
+			for(String flightNum : flightsRemoved){
+				Flight flight = flightRepository.findOne(flightNum);
+				Set<Passenger> passengers = flight.getPassengers();
+	
+				if(!passengers.contains(passenger)){
 					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-					throw new BadRequestException("Flight is full",400);//DONE bad request
+					throw new BadRequestException("passenger not in flight " + flightNum,400); // DONE bad request
 				} else {
-					seat--;
+					int seat = flight.getSeatsLeft();
+					System.out.println("seat" + seat);
+					seat++;
+					flight.setSeatsLeft(seat);
+					passengers.remove(passenger);
 				}
-				flight.setSeatsLeft(seat);
-				passengers.add(passenger);
+				flight.setPassengers(passengers);
+	
+				price -= flight.getPrice();
+				flights.remove(flight);
 			}
-			flight.setPassengers(passengers);
-
-			price += flight.getPrice();
-			flights.add(flight);
+		}
+		
+		if(flightsAdded != null) {
+			for(String flightNum : flightsAdded){
+				Flight flight = flightRepository.findOne(flightNum);
+				Set<Passenger> passengers = flight.getPassengers();
+	
+				if(passengers.contains(passenger)){
+					response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+					throw new BadRequestException("passenger already in flight " + flightNum,400); // DONE bad request
+				} else {
+					int seat = flight.getSeatsLeft();
+					System.out.println("seat" + seat);
+					if(seat == 0) {
+						response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+						throw new BadRequestException("Flight " + flightNum + " is full",400);//DONE bad request
+					} else {
+						seat--;
+					}
+					flight.setSeatsLeft(seat);
+					passengers.add(passenger);
+				}
+				flight.setPassengers(passengers);
+	
+				price += flight.getPrice();
+				flights.add(flight);
+			}
 		}
 		
 		reservation.setPrice(price);
@@ -346,73 +351,60 @@ public class ReservationController {
 		return true;
 	}
 	
-	@SuppressWarnings("unused")
+	
+	//@SuppressWarnings("unused")
 	private Object findReservation(String flightNumber, String from, String to, Integer passengerId, HttpServletResponse response){
 		Flight flight = null;
 		Passenger passenger = null;
 		Reservations reservations = new Reservations();
-		Set<Reservation >res_temp = new HashSet<Reservation>();
+		Set<Reservation> res_temp = new HashSet<Reservation>();
 		
-		System.out.println(flightNumber);
-		System.out.println(from);
-		System.out.println(to);
-		System.out.println(passengerId);
 		if(passengerId != null){
 			passenger = passengerRepository.findOne(passengerId);
 			if(passenger == null) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				throw new BadRequestException(passengerId, "Passenger with Id "); //DONE
 			}
-			//passenger.removeCircle();
-			//reservations = passenger.getReservations();
 			reservations.setReservations(passenger.getReservations());
 			if(reservations.getReservations() == null)//DONE this is response? yes， it is.
 				return "No result!";
     	}
+		
 		if(flightNumber != null){
 			flight = flightRepository.findOne(flightNumber);
     		if(flight == null) {
     			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				throw new BadRequestException(flightNumber, "Airline with flightNumber "); //DONE
     		}
-    		if(reservations != null){
+    		if(!reservations.getReservations().isEmpty()){
     			for(Reservation re : reservations.getReservations()){
-    				if(!re.getFlights().contains(flight)){
-    					Set<Reservation>res = reservations.getReservations();
-    					res.remove(re);
-    					reservations.setReservations(res);
+    				if(re.getFlights().contains(flight)){
+    					res_temp.add(re);
     				}
     			}
-    			if(reservations == null){////TODO this is response?   yes it is
-    				return "No result!";
-    			}
     		} else {
+    			//Set<Reservation> res = null;
     			for(Reservation re : reservationRepository.findAll()){
     				for(Flight f : re.getFlights()){
     					if(f.equals(flight)){
-    						Set<Reservation>res = reservations.getReservations();
-    						res.add(re);
-    						reservations.setReservations(res);
+    						res_temp.add(re);
     					}
     				}
-    			}
-    			if(reservations == null){////TODO this is response?   yes it is
-    				return "No result!";
     			}
     		}
     	}
 		
+		reservations.setReservations(res_temp);
+		res_temp = new HashSet<Reservation>();
+		
 		if(from != null){
-			if(reservations != null){
+			if(!reservations.getReservations().isEmpty()){
 				for(Reservation re : reservations.getReservations()){
 					for(Flight f : re.getFlights()){
 						if(f.getFrom().equals(from)){
 							res_temp.add(re);
 						}
 					}
-				}
-				if(res_temp == null){
-					return "No result!";
 				}
 			} else {
 				for(Reservation re : reservationRepository.findAll()){
@@ -422,18 +414,14 @@ public class ReservationController {
 						}
     				}
     			}
-				if(res_temp == null){
-					return "No result!";
-				}
 			}
     	}
-		System.out.println("1 " + res_temp.size());
+		//System.out.println("1 " + res_temp.size());
 		
 		reservations.setReservations(res_temp);
 		res_temp = new HashSet<Reservation>();
-		// TODO get reservation;
 		if(to != null){
-			if(reservations != null){
+			if(!reservations.getReservations().isEmpty()){
 				for(Reservation re : reservations.getReservations()){
 					for(Flight f : re.getFlights()){
 						if(f.getTo().equals(to)){
@@ -449,22 +437,23 @@ public class ReservationController {
 						}
     				}
     			}
-				if(res_temp == null){
-					return "No result!";
-				}
 			}
     	}
-		System.out.println("2 " + res_temp);
-		if(res_temp == null)
+		//System.out.println("2 " + res_temp);
+		if(res_temp.isEmpty())
 			res_temp = reservations.getReservations();
 		
 		reservations = new Reservations();
 		for(Reservation re : res_temp){
 			re.removeCircle();
-			Set<Reservation>res = reservations.getReservations();
+			Set<Reservation> res = reservations.getReservations();
 			res.add(re);
 			reservations.setReservations(res);
 		}
-        return reservations;
+		
+		if(reservations.getReservations().isEmpty())
+			return "No result!";
+		else
+			return reservations;
 	}
 }

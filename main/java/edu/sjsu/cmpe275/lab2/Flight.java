@@ -64,7 +64,8 @@ public class Flight {
 
 	@Embedded
 	private Plane plane; // Embedded
-
+	
+	@JsonInclude(JsonInclude.Include.NON_EMPTY)
 	@ManyToMany
 	@JoinTable(name = "flight_passengers",
 				joinColumns = @JoinColumn(name = "flight_id", referencedColumnName="number") ,

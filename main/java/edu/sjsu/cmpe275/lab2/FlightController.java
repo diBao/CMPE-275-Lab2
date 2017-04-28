@@ -130,23 +130,21 @@ public class FlightController {
 			return true;
 		}
 	@RequestMapping(value = "/{flightNumber}",
-			params = "json",
 			method = RequestMethod.GET,
 			produces = "application/json")
 	public Object getFlightJSON(@PathVariable String flightNumber,
-			@RequestParam Boolean json, HttpServletResponse response) throws BadRequestException{
-		if(json.equals(true)){
+			HttpServletResponse response) throws BadRequestException{
 			Flight flight = flightRepository.findOne(flightNumber);
 			if(flight!=null){
 				flight.removeCircle();
 				return flight;
 				}else{
 				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				throw new BadRequestException(flightNumber, "Airline with flightNumber");//DONE
+				throw new BadRequestException(flightNumber, "Sorry, the requested flight with number ");//DONE
 			}
-		}
-		response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-		throw new BadRequestException("Parameter JSON error", 400);//DONE
+			
+		//response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+		//throw new BadRequestException("Parameter JSON error", 400);//DONE
 	}
 	
 	@RequestMapping(value = "/{flightNumber}",
@@ -162,7 +160,7 @@ public class FlightController {
 				return flight;
 			} else {
 				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-				throw new BadRequestException(flightNumber, "Airline with flightNumber");//DONE
+				throw new BadRequestException(flightNumber, "Sorry, the requested flight with number ");//DONE
 			}
 		}
 		
@@ -220,7 +218,7 @@ public class FlightController {
 		
 		if(flightRepository.findOne(flightNumber).equals(null)){
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			throw new BadRequestException(flightNumber, "Airline with flightNumber");
+			throw new BadRequestException(flightNumber, "Flight with number");
 		}
 		
 		if(flightRepository.findOne(flightNumber).getPassengers().isEmpty()){
@@ -233,6 +231,6 @@ public class FlightController {
 		}
 				
 		response.setStatus(HttpServletResponse.SC_OK);
-		return new Response(HttpServletResponse.SC_OK, "Airline with flightNumber "+flightNumber+" is deleted successfully");
+		return new Response(HttpServletResponse.SC_OK, "Flight with number "+flightNumber+" is deleted successfully");
 	}
 }
