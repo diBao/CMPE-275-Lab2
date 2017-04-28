@@ -121,7 +121,9 @@ public class ReservationController {
 		if(passengerId != null || from != null || to != null || flightNumber != null){
 			return findReservation(flightNumber, from, to, passengerId, response); 
 		}
-		return "bad request"; //TODO "Please specify at least one parameter"
+		response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+		throw new BadRequestException("Please specify at least one parameter",400);
+		//return "bad request"; //TODO "Please specify at least one parameter"
 		//return reservationRepository.findOne(reservation.getOrderNumber());
 	}
 
