@@ -1,5 +1,9 @@
 package edu.sjsu.cmpe275.lab2;
 
+/*
+ * A JAVA file which handle the CRUD operation of flight Object
+ */
+
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -216,7 +220,7 @@ public class FlightController {
 	public  Object  deleteAirline(@PathVariable String flightNumber, HttpServletResponse response)throws BadRequestException {
 		//successDelete is get from searching of database
 		
-		if(flightRepository.findOne(flightNumber).equals(null)){
+		if(!flightRepository.exists(flightNumber)){
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 			throw new BadRequestException(flightNumber, "Flight with number");
 		}

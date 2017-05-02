@@ -1,5 +1,9 @@
 package edu.sjsu.cmpe275.lab2;
 
+/*
+ * A JAVA file which handle the CRUD operation of reservation Object
+ */
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
@@ -368,12 +372,12 @@ public class ReservationController {
 				throw new BadRequestException(passengerId, "Passenger with Id "); //DONE
 			}
 			res_temp = passenger.getReservations();
-			if(res_temp == null)//DONE this is response? yes， it is.
+			if(res_temp.isEmpty())//DONE this is response? yes， it is.
 				return "No result!";
 			reservations.setReservations(res_temp);
 			res_temp = new HashSet<Reservation>();
     	}
-		//System.out.println(res_temp.size());
+		System.out.println(reservations.getReservations().size());
 		
 		
 		if(flightNumber != null){
@@ -405,7 +409,7 @@ public class ReservationController {
     		reservations.setReservations(res_temp);
     		res_temp = new HashSet<Reservation>();
     	}
-		//System.out.println(res_temp.size());
+		System.out.println(reservations.getReservations().size());
 		
 		
 		if(from != null){
@@ -434,7 +438,7 @@ public class ReservationController {
 			reservations.setReservations(res_temp);
 			res_temp = new HashSet<Reservation>();
     	}
-		//System.out.println(res_temp.size());
+		System.out.println(reservations.getReservations().size());
 		
 		if(to != null){
 			if(!reservations.getReservations().isEmpty()){
@@ -459,7 +463,7 @@ public class ReservationController {
     				return "No result!";
 			}
     	}
-		//System.out.println(res_temp.size());
+		System.out.println(res_temp.size());
 		if(res_temp.isEmpty())
 			res_temp = reservations.getReservations();
 		

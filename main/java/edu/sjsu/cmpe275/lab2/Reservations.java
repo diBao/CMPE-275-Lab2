@@ -1,5 +1,9 @@
 package edu.sjsu.cmpe275.lab2;
 
+/*
+ * Definition of reservations object
+ */
+
 import java.util.HashSet;
 import java.util.Set;
 

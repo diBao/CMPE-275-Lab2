@@ -1,5 +1,9 @@
 package edu.sjsu.cmpe275.lab2;
 
+/*
+ * function: start of spring boot application
+ */
+
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.annotation.ComponentScan;

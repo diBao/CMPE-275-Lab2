@@ -1,5 +1,9 @@
 package edu.sjsu.cmpe275.lab2;
 
+/*
+ * Definition of plane object
+ */
+
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.xml.bind.annotation.XmlRootElement;

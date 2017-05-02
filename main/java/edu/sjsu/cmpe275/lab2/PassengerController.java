@@ -1,5 +1,9 @@
 package edu.sjsu.cmpe275.lab2;
 
+/*
+ * A JAVA file which handle the CRUD operation of Passenger Object
+ */
+
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;

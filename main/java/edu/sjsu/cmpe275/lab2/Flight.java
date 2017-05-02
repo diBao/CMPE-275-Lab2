@@ -1,5 +1,9 @@
 package edu.sjsu.cmpe275.lab2;
 
+/*
+ * Definition of flight object
+ */
+
 import java.util.Date;
 import java.util.Set;
 import java.util.HashSet;
@@ -47,7 +51,7 @@ public class Flight {
 	*The system only needs to supports PST. You can ignore other time zones.
 	*/
 	
-	//TODO change type to String
+	//Done change type to String
 	//@JsonFormat(pattern="yyyy-MM-dd-HH")
 	@Column(name = "DEPARTURE_TIME", nullable = false)
 	private String departureTime;
